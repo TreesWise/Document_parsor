@@ -6,9 +6,12 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse
 from current_doc_parsor import process_document_to_json
 from fastapi.security.api_key import APIKeyHeader
+import tempfile
 
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Security, Depends
+
+
 
 
 
@@ -44,7 +47,7 @@ async def upload_file(api_key: str = Depends(verify_api_key), file: UploadFile =
     # temp_filename = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}{file_ext}")
     # with open(temp_filename, "wb") as buffer:
     #     shutil.copyfileobj(file.file, buffer)
-     with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[-1]) as temp_file:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[-1]) as temp_file:
         shutil.copyfileobj(file.file, temp_file)
         temp_file_path = temp_file.name
 
