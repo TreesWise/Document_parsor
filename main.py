@@ -12,8 +12,6 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Security, De
 
 
 
-
-
 app = FastAPI(title="Document Parser API", version="1.0")
 
 # Secure API Key Authentication
