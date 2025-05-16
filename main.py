@@ -30,8 +30,8 @@ def verify_api_key(api_key: str = Security(api_key_header)):
 
 
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# UPLOAD_DIR = "uploads"
+# os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/upload/")
 
@@ -41,12 +41,15 @@ async def upload_file(api_key: str = Depends(verify_api_key), file: UploadFile =
     if file_ext.lower() not in [".pdf", ".jpg", ".jpeg", ".png"]:
         return JSONResponse({"error": "Only PDF or image files allowed."}, status_code=400)
 
-    temp_filename = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}{file_ext}")
-    with open(temp_filename, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    # temp_filename = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}{file_ext}")
+    # with open(temp_filename, "wb") as buffer:
+    #     shutil.copyfileobj(file.file, buffer)
+     with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[-1]) as temp_file:
+        shutil.copyfileobj(file.file, temp_file)
+        temp_file_path = temp_file.name
 
     try:
-        result = process_document_to_json(temp_filename)
+        result = process_document_to_json(temp_file_path)
 
         # If result is a JSON string, convert it to Python object
         if isinstance(result, str):
@@ -57,4 +60,4 @@ async def upload_file(api_key: str = Depends(verify_api_key), file: UploadFile =
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
     finally:
-        os.remove(temp_filename)
+        os.remove(temp_file_path)
