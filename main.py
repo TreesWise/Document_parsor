@@ -54,15 +54,21 @@ async def upload_file(api_key: str = Depends(verify_api_key), file: UploadFile =
     try:
         result = process_document_to_json(temp_file_path)
 
-        # If result is a JSON string, convert it to Python object
+        # If result is a JSON string, convert it to a Python object
         if isinstance(result, str):
             result = json.loads(result)
-        #Create a lowercase version of the mapping dictionary
-        mapping_lower = {k.lower(): v for k, v in mapping_dict.items()}
-          # Perform docName mapping
+
+        # Normalize and flatten the mapping dictionary
+        normalized_mapping = {}
+        for key, value in mapping_dict.items():
+            aliases = [alias.strip().lower() for alias in key.split("/")]
+            for alias in aliases:
+                normalized_mapping[alias] = value
+
+        # Perform docName mapping
         for item in result:
-            original_doc_name = item.get("docName", "").strip()
-            mapped_doc_name = mapping_lower.get(original_doc_name.lower())
+            original_doc_name = item.get("docName", "").strip().lower()
+            mapped_doc_name = normalized_mapping.get(original_doc_name)
             if mapped_doc_name:
                 item["docName"] = mapped_doc_name
 
