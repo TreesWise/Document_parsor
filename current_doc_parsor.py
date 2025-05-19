@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from openai import AzureOpenAI
 from datetime import datetime
 
+
 load_dotenv()
 
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
@@ -60,7 +61,7 @@ JSON Format:
 
 Extract the following details from the document:
 
-1. "docName" refers to the official name of the document (e.g., "Seafarer's Identity Document").
+1. "docName" refers to the official name of the document (e.g., "Seafarer's Identity Document").Full name of the document, including the role or certification type if available (e.g., 'Certificate of Competency (Master)', 'Endorsement (GMDSS Radio Operator)')
 2. "DocNumber" refers to the unique document number (e.g., "LM040496") or "Certificate Number" or "seamans book no" (if explicitly mentioned).
 3. The "uploadedDate" field should NEVER be extracted from the document.
    It must always be set to the current system date of extraction, which is "{current_date}".
@@ -133,7 +134,7 @@ def postprocess_json(raw_json):
     for obj in results:
         known_fields = {
          
-            "docType": obj.get("docType", "").strip(),
+          
             "docName": obj.get("docName", "").strip(),
             "DocNumber": obj.get("DocNumber", "").strip(),
             "uploadedDate": obj.get("uploadedDate", "Not Available"),
@@ -158,8 +159,17 @@ def postprocess_json(raw_json):
 
     return formatted
 
+
+
+
+
+
 def process_document_to_json(file_path):
     images_b64 = convert_to_base64(file_path)
     raw_json = extract_json(images_b64)
     final_json = postprocess_json(raw_json)
+ 
     return final_json
+
+
+
