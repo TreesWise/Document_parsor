@@ -12,6 +12,7 @@ import tempfile
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Security, Depends
 
 
+from dict_file import mapping_dict
 
 
 app = FastAPI(title="Document Parser API", version="1.0")
@@ -37,7 +38,7 @@ def verify_api_key(api_key: str = Security(api_key_header)):
 
 @app.post("/upload/")
 
-async def upload_file(api_key: str = Depends(verify_api_key), file: UploadFile = File(...)):
+async def upload_file(api_key: str = Depends(verify_api_key), file: UploadFile = File(...),Doctype: str = Form("")):
     
     file_ext = os.path.splitext(file.filename)[1]
     if file_ext.lower() not in [".pdf", ".jpg", ".jpeg", ".png"]:
@@ -56,6 +57,14 @@ async def upload_file(api_key: str = Depends(verify_api_key), file: UploadFile =
         # If result is a JSON string, convert it to Python object
         if isinstance(result, str):
             result = json.loads(result)
+        #Create a lowercase version of the mapping dictionary
+        mapping_lower = {k.lower(): v for k, v in mapping_dict.items()}
+          # Perform docName mapping
+        for item in result:
+            original_doc_name = item.get("docName", "").strip()
+            mapped_doc_name = mapping_lower.get(original_doc_name.lower())
+            if mapped_doc_name:
+                item["docName"] = mapped_doc_name
 
         return JSONResponse(content=result, media_type="application/json")
 
