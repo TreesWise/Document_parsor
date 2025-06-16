@@ -97,7 +97,9 @@ import asyncio
 from dotenv import load_dotenv
 from fastapi import HTTPException, Form, Security, Depends
 from dict_file import mapping_dict
-import win32com.client
+import subprocess
+import asyncio
+
 load_dotenv()
 
 app = FastAPI(title="Document Parser API", version="1.0")
@@ -123,7 +125,7 @@ async def convert_docx_to_pdf(docx_path):
 
     try:
         if platform.system() == "Windows":
-            
+            import win32com.client
             word = win32com.client.Dispatch("Word.Application")
             doc = word.Documents.Open(os.path.abspath(docx_path))
             doc.SaveAs(os.path.abspath(pdf_path), FileFormat=17)  # PDF format
