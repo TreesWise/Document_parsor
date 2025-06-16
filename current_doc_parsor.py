@@ -302,6 +302,9 @@ For each document, ensure:
 
 
 def postprocess_json(raw_json):
+    if not isinstance(raw_json, str):
+        return raw_json  # Nothing to do
+
     try:
         json_objects = raw_json.split('}\n{')
         if json_objects:
@@ -309,9 +312,9 @@ def postprocess_json(raw_json):
             json_objects[-1] = '{' + json_objects[-1]
         results = [json.loads(obj) for obj in json_objects]
     except json.JSONDecodeError:
-        return raw_json
+        return raw_json  # or return [] if you'd rather fail silently
 
-    formatted = [] 
+    formatted = []
     for obj in results:
         known_fields = {
             "docName": obj.get("docName", "").strip(),
@@ -323,7 +326,6 @@ def postprocess_json(raw_json):
             "isNationalDoc": obj.get("isNationalDoc", "No").strip(),
         }
 
-        # Capture any additional fields not listed in the known schema
         extra_fields = {
             k: v for k, v in obj.items()
             if k not in known_fields and k not in known_fields.keys()
@@ -344,18 +346,37 @@ def postprocess_json(raw_json):
 
 #     return final_json
 
+# def process_document_to_json(file_path):
+#     images_b64 = convert_to_base64(file_path)
+#     raw_json = extract_json(images_b64)
+
+#     # If it's a string, parse or clean it
+#     if isinstance(raw_json, str):
+#         try:
+#             raw_json = json.loads(raw_json)
+#         except json.JSONDecodeError:
+#             # Try post-processing manually (e.g., if it's not a clean array)
+#             return postprocess_json(raw_json)
+
+#     # If already a list (clean JSON), skip postprocessing
+#     return raw_json
 def process_document_to_json(file_path):
     images_b64 = convert_to_base64(file_path)
     raw_json = extract_json(images_b64)
 
-    # If it's a string, parse or clean it
+    # If it's a string, try parsing
     if isinstance(raw_json, str):
         try:
+            # Try to parse as proper JSON list
             raw_json = json.loads(raw_json)
         except json.JSONDecodeError:
-            # Try post-processing manually (e.g., if it's not a clean array)
+            # If it's not valid JSON, try fallback string splitting logic
             return postprocess_json(raw_json)
 
-    # If already a list (clean JSON), skip postprocessing
-    return raw_json
+    # If it's already a list, return it as-is
+    if isinstance(raw_json, list):
+        return raw_json
+
+    # If it's something else, return safely
+    return []
 
