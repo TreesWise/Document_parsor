@@ -166,7 +166,26 @@ async def upload_file(api_key: str = Depends(verify_api_key), file: UploadFile =
         try:
             pdf_path = await convert_docx_to_pdf(temp_file_path)
             result = process_document_to_json(pdf_path)
+            # return JSONResponse(content=result, media_type="application/json")
+            if isinstance(result, str):
+                result = json.loads(result)
+
+            # Normalize and flatten the mapping dictionary
+            normalized_mapping = {}
+            for key, value in mapping_dict.items():
+                aliases = [alias.strip().lower() for alias in key.split("/")]
+                for alias in aliases:
+                    normalized_mapping[alias] = value
+
+            # Perform docName mapping
+            for item in result:
+                original_doc_name = item.get("docName", "").strip().lower()
+                mapped_doc_name = normalized_mapping.get(original_doc_name)
+                if mapped_doc_name:
+                    item["docName"] = mapped_doc_name
+
             return JSONResponse(content=result, media_type="application/json")
+        
         except Exception as e:
             return JSONResponse({"error": str(e)}, status_code=500)
         finally:
