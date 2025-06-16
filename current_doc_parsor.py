@@ -337,11 +337,24 @@ def postprocess_json(raw_json):
     return formatted
 
 
+# def process_document_to_json(file_path):
+#     images_b64 = convert_to_base64(file_path)
+#     raw_json = extract_json(images_b64)
+#     final_json = postprocess_json(raw_json)
+
+#     return final_json
+
 def process_document_to_json(file_path):
     images_b64 = convert_to_base64(file_path)
     raw_json = extract_json(images_b64)
+
+    # If it's a string, parse it first
+    if isinstance(raw_json, str):
+        try:
+            raw_json = json.loads(raw_json)
+        except json.JSONDecodeError:
+            pass  # Let postprocess_json handle string splitting fallback
+
     final_json = postprocess_json(raw_json)
-
     return final_json
-
 
