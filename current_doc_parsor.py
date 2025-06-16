@@ -259,6 +259,14 @@ Instructions:
 - Do not include unnecessary or incorrect values. Return only the required fields in **English**.
 If no convincing document data is available (i.e., no valid docName,DocNumber,issuedCountry, issue date, or expiry date), return null.
 
+
+**Output Formatting:**
+    - **Return only a clean JSON object** with no extra text, explanations, code blocks, or Markdown formatting.
+    - **Do not use code block syntax (```json ... ```) around the response.**
+    - **Do not add extra indentation, explanations, or formatting.** Return the raw JSON directly.
+    - **The JSON output should start with `{' and end with '}` and should be valid JSON syntax.**
+
+    
 Return the results as a **list of JSON objects**, one for each extracted document or endorsement section. Only include documents like endorsements or certificates with valid details.
 
 For each document, ensure:
