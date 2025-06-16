@@ -167,8 +167,8 @@ async def upload_file(api_key: str = Depends(verify_api_key), file: UploadFile =
             pdf_path = await convert_docx_to_pdf(temp_file_path)
             result = process_document_to_json(pdf_path)
             # return JSONResponse(content=result, media_type="application/json")
-            if isinstance(result, str):
-                result = json.loads(result)
+            # if isinstance(result, str):
+            #     result = json.loads(result)
 
             # Normalize and flatten the mapping dictionary
             normalized_mapping = {}
