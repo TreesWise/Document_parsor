@@ -348,13 +348,14 @@ def process_document_to_json(file_path):
     images_b64 = convert_to_base64(file_path)
     raw_json = extract_json(images_b64)
 
-    # If it's a string, parse it first
+    # If it's a string, parse or clean it
     if isinstance(raw_json, str):
         try:
             raw_json = json.loads(raw_json)
         except json.JSONDecodeError:
-            pass  # Let postprocess_json handle string splitting fallback
+            # Try post-processing manually (e.g., if it's not a clean array)
+            return postprocess_json(raw_json)
 
-    final_json = postprocess_json(raw_json)
-    return final_json
+    # If already a list (clean JSON), skip postprocessing
+    return raw_json
 
