@@ -176,6 +176,7 @@
 
 
 
+
 import os
 import json
 import base64
@@ -227,7 +228,8 @@ JSON Format:
   "docName": "...",              
   "DocNumber": "...",            
   "uploadedDate": "{current_date}",
-  "issuedCountry": "...",     
+  "issuedCountry": "...",  
+  "IssuedPlace": "...",   
   "issueDate": "dd-mm-yyyy",     
   "expDate": "dd-mm-yyyy",       
   "isNationalDoc": "No"     
@@ -243,6 +245,10 @@ Extract the following details from the document:
 5. "issueDate" refers to the document's issue date (ensure proper date format: dd-mm-yyyy).
 6. "expDate" refers to the document's expiry date, if available.
 7. "isNationalDoc" should default to "No".
+8."IssuedPlace" refers to the place where the document was issued.
+9. "IssuedPlace" refers to the place (e.g., city, port, country) where the document was issued. 
+Do not return organizational or institutional names (e.g., "Ministry of...", "Department of...", "Authority...").
+If only an institution or department is available (not a place), omit "IssuedPlace" or set it to null.
 
 Instructions:
 - If the document contains multiple sections, endorsements, or certificates, **extract each separately** and return them as individual JSON objects.
@@ -257,7 +263,7 @@ Instructions:
 - Do NOT extract "uploadedDate" from any part of the document.
 - Ensure **dates are in "dd-mm-yyyy" format**, and the **"DocNumber"** should be extracted exactly as seen on the document without any formatting changes.
 - Do not include unnecessary or incorrect values. Return only the required fields in **English**.
-If no convincing document data is available (i.e., no valid docName,DocNumber,issuedCountry, issue date, or expiry date), return null.
+If no convincing document data is available (i.e., no valid docName,DocNumber,issuedCountry,IssuedPlace, issue date, or expiry date), return null.
 
 
 **Output Formatting:**
@@ -321,6 +327,9 @@ def postprocess_json(raw_json):
             "DocNumber": obj.get("DocNumber", "").strip(),
             "uploadedDate": obj.get("uploadedDate", "Not Available"),
             "issuedCountry": obj.get("issuedCountry", "").strip(),
+            
+             "IssuedPlace": obj.get("IssuedPlace", "").strip(),
+            
             "issueDate": obj.get("issueDate", "").strip(),
             "expDate": obj.get("expDate", "Not Available").strip(),
             "isNationalDoc": obj.get("isNationalDoc", "No").strip(),
@@ -339,27 +348,6 @@ def postprocess_json(raw_json):
     return formatted
 
 
-# def process_document_to_json(file_path):
-#     images_b64 = convert_to_base64(file_path)
-#     raw_json = extract_json(images_b64)
-#     final_json = postprocess_json(raw_json)
-
-#     return final_json
-
-# def process_document_to_json(file_path):
-#     images_b64 = convert_to_base64(file_path)
-#     raw_json = extract_json(images_b64)
-
-#     # If it's a string, parse or clean it
-#     if isinstance(raw_json, str):
-#         try:
-#             raw_json = json.loads(raw_json)
-#         except json.JSONDecodeError:
-#             # Try post-processing manually (e.g., if it's not a clean array)
-#             return postprocess_json(raw_json)
-
-#     # If already a list (clean JSON), skip postprocessing
-#     return raw_json
 def process_document_to_json(file_path):
     images_b64 = convert_to_base64(file_path)
     raw_json = extract_json(images_b64)
