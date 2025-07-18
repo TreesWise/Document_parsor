@@ -337,11 +337,15 @@ def extract_json(images_b64):
 
     ### Special Rules for DocNumber:
     - **"DocNumber"**: Select the most relevant number based on priority:
-    1. **Passport Number** (highest priority).
+    1. **Passport Number** (highest priority). If 'docName' is "Visa", then look for "Passport Number" and use that as the 'DocNumber'.
     2. **Seaman's Book No.**.
     3. **Certificate No.** / **Doc Number**.
-    4. **Other Numbers** (e.g., "Application ID", "Visa Grant Number", "Serial No", "Control Number", "ID No") – **ignore these unless no valid DocNumber is found**.
+    4. **Strictly ignore any numbers without an explicit label indicating a document number** (e.g., "Passport Number", "Seaman's Book No.", "Certificate No.", "Doc Number"). This includes numbers found in fields like "Application ID", "Visa Grant Number", "Serial No", "Control Number", or any unlabelled number. If no valid DocNumber with an explicit label is found, set "DocNumber" to "null".
+
+ 
     - **Do not use** "Serial No", "SL No", "Control Number", or "ID No".
+
+    
 
     ### Field Rules:
     1. **"docName"** – Name of the certificate, endorsement, or training (e.g., "Certificate of Competency", "Advanced Fire Fighting", "Passport", "Visa").
