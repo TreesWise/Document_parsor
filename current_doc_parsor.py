@@ -307,6 +307,7 @@ def convert_to_base64(file_path):
 #     return content
 
 
+
 def extract_json(images_b64):
     prompt_text = f"""You are an expert in document data extraction. Extract and translate into English only the following details in the following JSON format:
 
@@ -322,54 +323,57 @@ def extract_json(images_b64):
     "isNationalDoc": "No"     
     }}
 
-    Instructions:
+    
+    ### Instructions:
+    1. Extract all **valid certificates, endorsements, medical documents, and training courses** from the document and return each as a separate JSON object.
 
-    Extract **all valid certificates, endorsements, medical documents, and training courses** from the document image(s). Return each as a separate JSON object.
+    ### Special Rules for IssuedPlace:
+    - **IssuedPlace** refers to the place of issue (city, port, or institution).
+    - Do not use **place of birth, residence, or home city** as `IssuedPlace`.
+    - **Never set `IssuedPlace` to `"null"`** if the country is known; use the country as a fallback if `IssuedPlace` is missing.
+    - Set `IssuedPlace` to `"null"` only if both the place and country are missing or invalid.
+    - **This rule applies to all documents**. Even if `IssuedPlace` is missing in any document, it must always fallback to the `IssuedCountry` if the country is available. Do **not apply this logic to just the first document**, but **ensure it is applied consistently to all documents in the list**.
+
+
+    ### Special Rules for DocNumber:
+    - **"DocNumber"**: Select the most relevant number based on priority:
+    1. **Passport Number** (highest priority).
+    2. **Seaman's Book No.**.
+    3. **Certificate No.** / **Doc Number**.
+    4. **Other Numbers** (e.g., "Application ID", "Visa Grant Number", "Serial No", "Control Number", "ID No") – **ignore these unless no valid DocNumber is found**.
+    - **Do not use** "Serial No", "SL No", "Control Number", or "ID No".
 
     ### Field Rules:
-
-    1. **"docName"** – Official name of the certificate or training (e.g., "Certificate of Competency (Master)", "Advanced Fire Fighting", etc.).
-    2. **"DocNumber"** – Only use values explicitly labeled as “Certificate No.”, “Doc Number”, “Seaman’s Book No.”, etc. Do **not** use values labeled as "Serial No", "SL No", or "ID No".
-    3. **"uploadedDate"** – Always use today’s system date: **{current_date}**
+    1. **"docName"** – Name of the certificate, endorsement, or training (e.g., "Certificate of Competency", "Advanced Fire Fighting", "Passport", "Visa").
+    2. **"DocNumber"** – Use explicit labels like “Certificate No.”, “Doc Number”, “Passport Number”, etc.
+    3. **"uploadedDate"** – Use today’s date: **{current_date}**.
     4. **"issuedCountry"** – Country where the document was issued.
-    5. **"IssuedPlace"** – City or port of issue. Do **not** use institutional names (e.g., “Ministry of…”). If only an institution is listed, set to **"null"** (as string).
-    6. **"issueDate"** and **"expDate"** – Format all dates as **dd-mm-yyyy**.
+    5. **"IssuedPlace"** – City or port of issue. If only an institution name is listed (e.g., "Ministry of..."), set to **"null"**.
+    6. **"issueDate"** and **"expDate"** – Format as **dd-mm-yyyy**.
     7. **"isNationalDoc"** – Always set to **"No"**.
-    8. Use **"null"** (as string) for any missing fields (like DocNumber, IssuedPlace, etc.).
+    8. Use **"null"** for any missing fields (like DocNumber, IssuedPlace, etc.).
 
     ### Extraction Guidelines:
-
-    - Extract **each valid section** of the document individually:
-    - Certificates and Endorsements
-    - Health Certificates
-    - Training Courses
-    - Seaman’s Book and Passport (if included)
-
-    - **Only extract certificates or endorsements** that include a **valid document number** and clearly defined information.
-    - If a document section contains **multiple document numbers or expiry dates**, extract them as **separate JSON objects**, one per entry.
-    - **Ignore irrelevant sections** such as **revalidations**, administrative stamps, renewal logs, or entries lacking sufficient identifying details.
-    - If **no valid document or course information is found**, return a single value: `null`.
-    - Do **not extract duplicate or partial entries** without core details like "docName", "issuedCountry", or "issueDate".
-
-    - If both certificates and courses appear in the same document, **extract all of them** without prioritizing one type over the other.
-    - **Translate content into English** where necessary.
-    - Use `"null"` (as string) for missing fields.
+    - Extract valid sections of the document:
+    - Certificates, Endorsements, Health Certificates, Training Courses, Seaman’s Book, Passport.
+    - Only extract sections with valid **document numbers** and clear details.
+    - If multiple numbers or expiry dates exist, return them as separate objects.
+    - Ignore irrelevant sections like revalidations, administrative stamps, or incomplete details.
+    - If no valid information is found, return `null`.
+    - Extract all valid certificates and courses, no prioritization.
+    - **Translate content into English** where needed.
 
     ### Special Case: Course Lists or Tables
-
-    - If training courses or modules are listed in **tables or summaries**, extract **each row as a separate JSON object**.
-    - Set:
-    - `"docName"` to the course name
-    - `"DocNumber"`, `"issueDate"`, `"expDate"`, `"IssuedPlace"` to `"null"` (as string) if not available.
-    - Do **not skip course entries**, even if embedded in other document blocks.
+    - If training courses are listed in tables, extract each row as a separate object.
+    - Set `"DocNumber"`, `"issueDate"`, `"expDate"`, `"IssuedPlace"` to `"null"` if not available.
+    - Do not skip course entries even if embedded in other sections.
 
     ### Output Format:
+    - Return a flat JSON array with no markdown, code blocks, or extra commentary.
+    - Each object must include all fields listed in the JSON format.
+    - Ensure the output is valid JSON.
 
-    - Return a **flat JSON array** of objects — no markdown, no code blocks, no explanations.
-    - Each object must contain **all fields listed** in the JSON Format block above.
-    - Output must be **valid JSON**, with no extra formatting, commentary, or structure.
-
-    Examples to include:
+    ### Examples:
     - Certificate of Competency (Master)
     - Endorsement (GMDSS Radio Operator)
     - Seafarer's Medical Certificate
@@ -451,6 +455,9 @@ def postprocess_json(raw_json):
     return formatted
 
 
+
+
+
 def process_document_to_json(file_path):
     images_b64 = convert_to_base64(file_path)
     raw_json = extract_json(images_b64)
@@ -470,4 +477,3 @@ def process_document_to_json(file_path):
 
     # If it's something else, return safely
     return []
-
