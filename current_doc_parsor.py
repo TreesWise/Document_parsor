@@ -435,7 +435,7 @@ def postprocess_json(raw_json):
             "uploadedDate": obj.get("uploadedDate", "Not Available"),
             "issuedCountry": obj.get("issuedCountry", "").strip(),
             
-             "IssuedPlace": obj.get("IssuedPlace", "").strip(),
+            "IssuedPlace": obj.get("IssuedPlace", "").strip(),
             
             "issueDate": obj.get("issueDate", "").strip(),
             "expDate": obj.get("expDate", "Not Available").strip(),
