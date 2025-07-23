@@ -82,7 +82,6 @@
 
 
 
-
 import os
 import shutil
 import uuid
@@ -97,6 +96,8 @@ import asyncio
 from dotenv import load_dotenv
 from fastapi import HTTPException, Form, Security, Depends
 from dict_file import mapping_dict
+from country_mapping import country_mapping
+
 import subprocess
 import asyncio
 
@@ -149,6 +150,7 @@ async def convert_docx_to_pdf(docx_path):
     except Exception as e:
         print(f"DOCX to PDF conversion failed: {e}")
         raise HTTPException(status_code=500, detail=f"DOCX to PDF conversion failed: {e}")
+
 
 # Endpoint for uploading the file
 @app.post("/upload/")
@@ -216,6 +218,12 @@ async def upload_file(api_key: str = Depends(verify_api_key), file: UploadFile =
                 mapped_doc_name = normalized_mapping.get(original_doc_name)
                 if mapped_doc_name:
                     item["docName"] = mapped_doc_name
+                  # Perform issuedCountry mapping
+                original_country = item.get("issuedCountry", "").strip().lower()
+                for key, value in country_mapping.items():
+                    if key.strip().lower() == original_country:
+                        item["issuedCountry"] = value
+                        break
 
             return JSONResponse(content=result, media_type="application/json")
 
