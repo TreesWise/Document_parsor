@@ -176,7 +176,6 @@
 
 
 
-
 import os
 import json
 import base64
@@ -220,93 +219,6 @@ def convert_to_base64(file_path):
     print("Image converted.............................................")
     return images_b64
 
-# def extract_json(images_b64):
-#     prompt_text = f"""You are an expert in document data extraction. Extract and translate into English only the following details in JSON format:
-
-# JSON Format:
-# {{
-#   "docName": "...",              
-#   "DocNumber": "...",            
-#   "uploadedDate": "{current_date}",
-#   "issuedCountry": "...",  
-#   "IssuedPlace": "...",   
-#   "issueDate": "dd-mm-yyyy",     
-#   "expDate": "dd-mm-yyyy",       
-#   "isNationalDoc": "No"     
-# }}
-
-# Extract the following details from the document:
-
-# 1. "docName" refers to the official name of the document (e.g., "Seafarer's Identity Document"). Full name of the document, including the role or certification type if available (e.g., 'Certificate of Competency (Master)', 'Endorsement (GMDSS Radio Operator)')
-# 2. "DocNumber" refers to the unique document number (e.g., "LM040496") or "Certificate Number" or "seamans book no" (if explicitly mentioned).
-# 3. The "uploadedDate" field should NEVER be extracted from the document.
-#    It must always be set to the current system date of extraction, which is "{current_date}".
-# 4. "issuedCountry" refers to the country where the document was issued (e.g., "Spain").
-# 5. "issueDate" refers to the document's issue date (ensure proper date format: dd-mm-yyyy).
-# 6. "expDate" refers to the document's expiry date, if available.
-# 7. "isNationalDoc" should default to "No".
-# 8."IssuedPlace" refers to the place where the document was issued.
-# 9. "IssuedPlace" refers to the place (e.g., city, port, country) where the document was issued. 
-# Do not return organizational or institutional names (e.g., "Ministry of...", "Department of...", "Authority...").
-# If only an institution or department is available (not a place), omit "IssuedPlace" or set it to null.
-
-# Instructions:
-# - If the document contains multiple sections, endorsements, or certificates, **extract each separately** and return them as individual JSON objects.
-# - **Only extract valid endorsements and documents** with **valid document numbers**. 
-#     - **DocNumber** should correspond to the number explicitly labeled as "Doc Number," "Certificate No.," "seamansbook no.," or similar labels (avoid "Serial No" or "ID" unless explicitly labeled as such).
-#     - If there are multiple numbers such as "Serial No" or "ID" numbers, **ensure to capture only the "DocNumber"**.
-# - **Filter out irrelevant sections** (such as revalidation entries) that do not contain a valid "DocNumber" or issue/expiry dates.
-# - Return the extracted information as **an array of JSON objects** if the document contains multiple valid sections.
-# - Handle multiple documents or sections within a single file carefully, ensuring no entries are missed or merged incorrectly.
-# - If there are multiple document numbers or expiry dates mentioned, capture all of them accurately.
-# - The "uploadedDate" must always be set to the current system date of extraction, which is "{current_date}".
-# - Do NOT extract "uploadedDate" from any part of the document.
-# - Ensure **dates are in "dd-mm-yyyy" format**, and the **"DocNumber"** should be extracted exactly as seen on the document without any formatting changes.
-# - Do not include unnecessary or incorrect values. Return only the required fields in **English**.
-# If no convincing document data is available (i.e., no valid docName,DocNumber,issuedCountry,IssuedPlace, issue date, or expiry date), return null.
-
-
-# **Output Formatting:**
-#     - **Return only a clean JSON object** with no extra text, explanations, code blocks, or Markdown formatting.
-#     - **Do not use code block syntax (```json ... ```) around the response.**
-#     - **Do not add extra indentation, explanations, or formatting.** Return the raw JSON directly.
-#     - **The JSON output should start with `{' and end with '}` and should be valid JSON syntax.**
-
-    
-# Return the results as a **list of JSON objects**, one for each extracted document or endorsement section. Only include documents like endorsements or certificates with valid details.
-
-# For each document, ensure:
-# - The correct **DocNumber** is identified, and avoid confusing it with other numbers like "Serial No" or "ID" or number without any label unless clearly specified.
-# - Handle each document as an individual entry.
-# """
-
-#     prompt = [
-#         {
-#             "type": "text",
-#             "text": prompt_text
-#         },
-#         *[
-#             {
-#                 "type": "image_url",
-#                 "image_url": {
-#                     "url": f"data:image/png;base64,{img}"
-#                 }
-#             } for img in images_b64
-#         ]
-#     ]
-
-#     response = client.chat.completions.create(
-#         model="gpt-4o",
-#         messages=[{"role": "user", "content": prompt}]
-#     )
-
-#     content = response.choices[0].message.content.strip()
-#     if content.startswith("```json"):
-#         content = content.replace("```json", "").replace("```", "").strip()
-
-#     return content
-
-
 
 def extract_json(images_b64):
     prompt_text = f"""You are an expert in document data extraction. Extract and translate into English only the following details in the following JSON format:
@@ -320,12 +232,17 @@ def extract_json(images_b64):
     "IssuedPlace": "...",   
     "issueDate": "dd-mm-yyyy",     
     "expDate": "dd-mm-yyyy",       
-    "isNationalDoc": "No"     
+    "isNationalDoc": "Yes" or "No"   
     }}
 
     
     ### Instructions:
     1. Extract all **valid certificates, endorsements, medical documents, and training courses** from the document and return each as a separate JSON object.
+    2.1. **For Visa documents** (i.e., if `docName` is "Visa" or contains the word "Visa"):
+    - Extract only the **Visa Control Number** or **Visa Grant Number** as the `DocNumber`.
+    - **Strictly ignore the Passport Number**, even if it appears on the same page.
+    - The `DocNumber` must never be set to a **Passport Number** in Visa documents under any condition.
+    - If **both numbers are found**, always choose the **Visa-specific number**, and discard the Passport Number.
 
     ### Special Rules for IssuedPlace:
     - **IssuedPlace** refers to the place of issue (city, port, or institution).
@@ -337,24 +254,35 @@ def extract_json(images_b64):
 
     ### Special Rules for DocNumber:
     - **"DocNumber"**: Select the most relevant number based on priority:
-    1. **Passport Number** (highest priority). If 'docName' is "Visa", then look for "Passport Number" and use that as the 'DocNumber'.
-    2. **Seaman's Book No.**.
-    3. **Certificate No.** / **Doc Number**.
-    4. **Strictly ignore any numbers without an explicit label indicating a document number** (e.g., "Passport Number", "Seaman's Book No.", "Certificate No.", "Doc Number"). This includes numbers found in fields like "Application ID", "Visa Grant Number", "Serial No", "Control Number", or any unlabelled number. If no valid DocNumber with an explicit label is found, set "DocNumber" to "null".
+    1. **For Visa documents** (if `docName` is "Visa" or contains the word "Visa"): 
+        - Extract the **Visa Control Number** and use it as the `DocNumber`.
+        - **Do not** extract the **Passport Number** for Visa documents, even if both numbers are present.
+    2. **For Passport documents**: 
+        - Extract the **Passport Number** and use it as the `DocNumber`.
+    3. **Seaman's Book No.**.
+    4. **Certificate No.** / **Doc Number**.
+    5. **Strictly ignore any numbers without an explicit label indicating a document number** (e.g., "Passport Number", "Seaman's Book No.", "Certificate No.", "Doc Number", "Visa Control Number", "Visa Grant Number"). This includes numbers found in fields like "Application ID", "Serial No", "Control Number" or any unlabelled number. If no valid DocNumber with an explicit label is found, set "DocNumber" to "null".
+    6.For e-Business Visa use Applictaion id as DocNumber.
+    ### Special Rules for docName:
+    - **if the docName  is visa then check which visa also.
 
- 
+
+
     - **Do not use** "Serial No", "SL No", "Control Number", or "ID No".
 
     
 
     ### Field Rules:
     1. **"docName"** – Name of the certificate, endorsement, or training (e.g., "Certificate of Competency", "Advanced Fire Fighting", "Passport", "Visa").
-    2. **"DocNumber"** – Use explicit labels like “Certificate No.”, “Doc Number”, “Passport Number”, etc.
+    2. **"DocNumber"** – Use explicit labels like “Certificate No.”, “Doc Number”, “Passport Number” etc.
     3. **"uploadedDate"** – Use today’s date: **{current_date}**.
     4. **"issuedCountry"** – Country where the document was issued.
     5. **"IssuedPlace"** – City or port of issue. If only an institution name is listed (e.g., "Ministry of..."), set to **"null"**.
     6. **"issueDate"** and **"expDate"** – Format as **dd-mm-yyyy**.
-    7. **"isNationalDoc"** – Always set to **"No"**.
+    7. **"isNationalDoc"** – 
+    - Set to **"Yes"** only if the document is a **Passport** (i.e., `"docName"` is `"Passport"`).
+    - For **all other documents**, set it to **"No"**.
+
     8. Use **"null"** for any missing fields (like DocNumber, IssuedPlace, etc.).
 
     ### Extraction Guidelines:
