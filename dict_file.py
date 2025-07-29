@@ -3212,6 +3212,7 @@ mapping_dict = {
     'C1/D Visa':'US C1/D Crew Member/Transit Visa',
     'Visa - United States of America':'US C1/D Crew Member/Transit Visa',
     'Visa(C1/D)':'US C1/D Crew Member/Transit Visa',
-    'United States Visa(Crew Visa)':'US C1/D Crew Member/Transit Visa'
+    'United States Visa(Crew Visa)':'US C1/D Crew Member/Transit Visa',
+    'Visa-C1/D':'US C1/D Crew Member/Transit Visa'
 
 }
