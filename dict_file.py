@@ -3204,7 +3204,7 @@ mapping_dict = {
     'US Visa (C1/D)':'US C1/D Crew Member/Transit Visa',
     'Visa (United States)':'US C1/D Crew Member/Transit Visa',
     'Visa (United States, C1/D)':'US C1/D Crew Member/Transit Visa',
-    'Visa (United States of America':'US C1/D Crew Member/Transit Visa',
+    'Visa (United States of America'):'US C1/D Crew Member/Transit Visa',
     'Visa - C1/D':'US C1/D Crew Member/Transit Visa',
     'United States Visa (C1/D)':'US C1/D Crew Member/Transit Visa',
     'United States Visa':'US C1/D Crew Member/Transit Visa',
@@ -3214,6 +3214,9 @@ mapping_dict = {
     'Visa(C1/D)':'US C1/D Crew Member/Transit Visa',
     'United States Visa(Crew Visa)':'US C1/D Crew Member/Transit Visa',
     'Visa-C1/D':'US C1/D Crew Member/Transit Visa',
-    'Visa(C1/D)':'US C1/D Crew Member/Transit Visa'
+    'Visa(C1/D)':'US C1/D Crew Member/Transit Visa',
+    'Visa(United States of America-C1/D)':'US C1/D Crew Member/Transit Visa',
+     'Visa C1/D':'US C1/D Crew Member/Transit Visa',
+    'VisaC1/D':'US C1/D Crew Member/Transit Visa'
 
 }
